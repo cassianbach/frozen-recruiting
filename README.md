@@ -1,9 +1,7 @@
 # Frozen Recruiting
 
-A Minecraft **Fabric** client mod. Write a recruit message in a MobMastery / TargetMaster-style
+A Minecraft **Fabric** client mod. Write a recruit message in a simple and sleek
 GUI, then **right-click a player** to send it to them as `/tell`.
-
-Works on servers that use right-click for **ping**.
 
 ---
 
