@@ -1,0 +1,113 @@
+plugins {
+	id 'fabric-loom' version '1.17.21'
+}
+
+base {
+	archivesName = project.archives_base_name
+}
+
+// Per-Minecraft-version build settings. Sources that differ between Minecraft
+// versions live in versions/<mc>/src/main/java; everything else is shared in
+// src/main/java.
+//
+// The keys are quoted deliberately: a bare 1.21.11 would be parsed as a Gradle
+// version-number (1.21.11 -> 1 . 21 . 11), which silently corrupts the map key.
+def versionSettings = [
+		'1.21.11': [
+				yarn   : '1.21.11+build.1',
+				loader : '0.19.5',
+				api    : '0.141.6+1.21.11',
+		],
+		'1.21.1' : [
+				yarn   : '1.21.1+build.3',
+				loader : '0.16.14',
+				api    : '0.116.17+1.21.1',
+		],
+]
+
+// Gradle coerces a property value like "1.21.11" into a version-number before we can
+// read it, which turns it into "1". The same happens to -Pmc_version on the command
+// line, so MC_VERSION is the supported override and gradle.properties is the default.
+//
+//   Windows (cmd) :  set MC_VERSION=1.21.1 && gradle build
+//   PowerShell    :  $env:MC_VERSION='1.21.1'; gradle build
+def props = new Properties()
+file('gradle.properties').withInputStream { props.load(it) }
+
+def selected = (System.getenv('MC_VERSION') ?: props.getProperty('mc_version')).trim()
+
+if (selected == null || selected.isEmpty()) {
+	throw new GradleException('mc_version is not set in gradle.properties')
+}
+if (!versionSettings.containsKey(selected)) {
+	throw new GradleException("Unsupported mc_version '${selected}'. Supported: ${versionSettings.keySet().join(', ')}")
+}
+
+def settings = versionSettings[selected]
+def versionSrc = file("versions/${selected}/src/main/java")
+
+// Set after `selected` is resolved so the jar is named after the Minecraft version.
+version = selected
+group = project.maven_group
+
+repositories {
+	mavenCentral()
+	maven {
+		name = 'Fabric'
+		url = uri('https://maven.fabricmc.net/')
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${selected}"
+	mappings "net.fabricmc:yarn:${settings.yarn}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${settings.loader}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${settings.api}"
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/java', versionSrc]
+		}
+	}
+}
+
+// Sanity check: the two Minecraft-version-specific classes must exist, otherwise the
+// jar would build without the GUI or the right-click handler and fail silently.
+tasks.register('verifyVersionSources') {
+	doLast {
+		['we/frozen/recruiting/client/RecruitingScreen.java', 'we/frozen/recruiting/client/RecruitingInteraction.java'].each { rel ->
+			if (!file("versions/${selected}/src/main/java/${rel}").exists()) {
+				throw new GradleException("Missing version-specific source for ${selected}: ${rel}")
+			}
+		}
+	}
+}
+
+processResources {
+	inputs.property 'version', selected
+	inputs.property 'minecraft_version', selected
+	inputs.property 'loader_version', settings.loader
+
+	filesMatching('fabric.mod.json') {
+		expand version: selected,
+				minecraft_version: selected,
+				loader_version: settings.loader
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.named('build') {
+	dependsOn 'verifyVersionSources'
+}

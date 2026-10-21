@@ -1,0 +1,22 @@
+{
+	"key.categories.frozen-recruiting": "Frozen Recruiting",
+	"key.frozen-recruiting.open_gui": "Open Recruiting Menu",
+
+	"frozen_recruiting.gui.title": "Frozen Recruiting",
+	"frozen_recruiting.gui.message_label": "Recruit message",
+	"frozen_recruiting.gui.message_placeholder": "Type your message, then right-click a player...",
+	"frozen_recruiting.gui.send": "Save",
+	"frozen_recruiting.gui.clear": "Clear",
+	"frozen_recruiting.gui.done": "Cancel",
+	"frozen_recruiting.gui.discord": "Discord",
+	"frozen_recruiting.gui.hint": "Shift+right-click a player to keep the server's ping feature.",
+
+	"frozen_recruiting.msg.set": "Recruit message saved. Right-click a player to send it.",
+	"frozen_recruiting.msg.cleared": "Recruit message cleared.",
+	"frozen_recruiting.msg.sent": "Sent to %s",
+	"frozen_recruiting.msg.empty": "Write a message first.",
+	"frozen_recruiting.msg.unnamed": "That player has no username.",
+	"frozen_recruiting.msg.not_server": "You must be connected to a server.",
+	"frozen_recruiting.msg.discord_opened": "Opening Discord...",
+	"frozen_recruiting.msg.discord_failed": "Could not open Discord invite."
+}

@@ -1,0 +1,27 @@
+# Build output
+build/
+out/
+.gradle/
+*.class
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fabric / Loom local state
+run/
+remappedSrc/
+.fabric/
+run-data/

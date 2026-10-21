@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "frozen-recruiting",
+	"version": "${version}",
+	"name": "Frozen Recruiting",
+	"description": "Compose a recruit message in a TargetMaster-style GUI, then right-click a player to send it as /tell. Works on servers with right-click ping plugins.",
+	"authors": [
+		"hk3x219"
+	],
+	"contact": {},
+	"license": "MIT",
+	"icon": "assets/frozen-recruiting/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"we.frozen.recruiting.client.FrozenRecruitingClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
