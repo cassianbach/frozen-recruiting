@@ -23,6 +23,47 @@ Both need [Fabric API](https://modrinth.com/mod/fabric-api) — the mod depends 
 **Shift + right-click** falls through to the normal interaction, so servers that use
 right-click for ping keep working.
 
+### Sent tab
+
+The menu has two tabs:
+
+- **Compose** — write the message you are about to send.
+- **Sent** — everyone you have messaged, with their last reply, an unread badge, and an
+  inline reply field so you can `/tell` them again without leaving the menu.
+
+History is stored in `config/frozen-recruiting.json`.
+
+### Reply notifications
+
+When someone replies, a toast appears in the top-right with a short click sound, so a reply
+is not missed while you are busy.
+
+Reply detection works by matching the rendered chat text, because Fabric's client receive
+event discards the sender UUID before it fires. The matcher supports the formats seen in
+practice:
+
+| Format | Used by |
+|---|---|
+| `[Eviority_ -> You] hey` | Stray |
+| `Steve whispers to you: hey` | Vanilla |
+| `Steve whispered to you: hey` | past-tense variants |
+| `Steve tells you: hey` | some plugins |
+| `-> Steve: hey` | compact plugin formats |
+
+Only replies from players you have actually messaged are picked up, so unrelated chat does
+not trigger a popup.
+
+### Commands
+
+```
+/frozenrecruiting            summary
+/frozenrecruiting list       all contacts
+/frozenrecruiting unread     only contacts with unread replies
+/frozenrecruiting markread   clear all unread badges
+/frozenrecruiting clear      delete all history
+/frozenrecruiting reply <player> <text>
+```
+
 ### Why it works on ping servers
 
 The usual approach registers a Fabric `UseEntityCallback` and returns
@@ -48,5 +89,7 @@ $env:MC_VERSION = '1.21.1';  gradle build
 
 Use the environment variable rather than `-Pmc_version` — Gradle parses
 `-Pmc_version=1.21.11` as a version-number and mangles it into `1`.
+
+The built jar is copied to `lib/`.
 
 MIT licensed.
