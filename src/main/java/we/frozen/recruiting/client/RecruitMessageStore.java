@@ -58,6 +58,7 @@ public final class RecruitMessageStore {
 
 		// No leading slash: sendChatCommand builds the CommandExecutionC2SPacket itself.
 		handler.sendChatCommand("tell " + targetName + " " + message);
+		SentLog.recordSent(targetName);
 		ChatFeedback.success(client, "frozen_recruiting.msg.sent", targetName);
 		return true;
 	}

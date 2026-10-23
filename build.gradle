@@ -111,3 +111,19 @@ java {
 tasks.named('build') {
 	dependsOn 'verifyVersionSources'
 }
+
+// Copy the finished mod jar into lib/ so both Minecraft-version builds collect
+// in one obvious place. Sources jars are not copied - they are in build/libs.
+//
+// Note: jar.archiveFile points at the *unremapped* (-dev) output. The runnable,
+// intermediary-mapped jar is the remapJar output, which Loom places in build/libs.
+tasks.register('copyJarsToLib', Copy) {
+	dependsOn 'remapJar'
+	from layout.buildDirectory.dir('libs')
+	include "frozen-recruiting-${selected}.jar"
+	into file('lib')
+}
+
+tasks.named('build') {
+	finalizedBy 'copyJarsToLib'
+}

@@ -25,3 +25,7 @@ run/
 remappedSrc/
 .fabric/
 run-data/
+# Built mod jars live in lib/; they are published as GitHub Releases instead
+lib/
+dist/
+
