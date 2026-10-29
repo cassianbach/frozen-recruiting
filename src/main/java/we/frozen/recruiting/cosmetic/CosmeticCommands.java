@@ -7,9 +7,9 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
-import net.fabricmc.loader.api.FabricLoader;
 import we.frozen.recruiting.client.TextHelper;
 
 /**
@@ -32,6 +32,10 @@ public final class CosmeticCommands {
 								.then(ClientCommandManager.literal("code")
 										.then(ClientCommandManager.argument("code", StringArgumentType.greedyString())
 												.executes(CosmeticCommands::redeemCode)))
+								.then(ClientCommandManager.literal("mint")
+										.then(ClientCommandManager.argument("player", StringArgumentType.word())
+												.then(ClientCommandManager.argument("cosmetic", StringArgumentType.word())
+														.executes(CosmeticCommands::mintCode))))
 								.then(ClientCommandManager.literal("scan").executes(CosmeticCommands::scanFiles))
 								.then(ClientCommandManager.literal("keyinfo").executes(CosmeticCommands::keyInfo)))));
 	}
@@ -41,27 +45,27 @@ public final class CosmeticCommands {
 		CosmeticService service = CosmeticService.get();
 
 		if (!service.isAvailable()) {
-			source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§fNo cosmetics configured."));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fNo cosmetics configured."));
 			return 0;
 		}
 
 		List<String> owned = service.ownedCosmetics();
 		if (owned.isEmpty()) {
-			source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§fYou own no cosmetics. Redeem a code with "
-					+ "ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7/frozenrecruiting cosmetic code <code>ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§f."));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fYou own no cosmetics. Redeem a code with "
+					+ "\u00a77/frozenrecruiting cosmetic code <code>\u00a7f."));
 			return 0;
 		}
 
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7your cosmetics:"));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a77your cosmetics:"));
 		for (String id : owned) {
 			CosmeticDef def = CosmeticCatalog.get(id);
 			if (def == null) {
 				continue;
 			}
 
-			String marker = id.equals(service.equippedId()) ? " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a[Equipped]" : "";
-			source.sendFeedback(TextHelper.parse("  ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§f" + def.rarity().glyph + " " + def.displayName()
-					+ " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7(" + def.rarity().displayName + ")" + marker));
+			String marker = id.equals(service.equippedId()) ? " \u00a7a[Equipped]" : "";
+			source.sendFeedback(TextHelper.parse("  \u00a7f" + def.rarity().glyph + " " + def.displayName()
+					+ " \u00a77(" + def.rarity().displayName + ")" + marker));
 		}
 
 		return owned.size();
@@ -74,10 +78,10 @@ public final class CosmeticCommands {
 		CosmeticService service = CosmeticService.get();
 		if (service.equip(id)) {
 			CosmeticDef def = CosmeticCatalog.get(id);
-			source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§aEquipped: ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§f"
-					+ (def == null ? id : def.displayName()) + " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7(" + (def == null ? "?" : def.rarity().displayName) + ")"));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aEquipped: \u00a7f"
+					+ (def == null ? id : def.displayName()) + " \u00a77(" + (def == null ? "?" : def.rarity().displayName) + ")"));
 		} else {
-			source.sendError(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§cYou do not own \"" + id + "\"."));
+			source.sendError(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7cYou do not own \"" + id + "\"."));
 		}
 
 		return 1;
@@ -86,7 +90,7 @@ public final class CosmeticCommands {
 	private static int unequip(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
 		CosmeticService.get().unequip();
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§aBadge unequipped."));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aBadge unequipped."));
 		return 1;
 	}
 
@@ -98,21 +102,21 @@ public final class CosmeticCommands {
 		CodeCodec.VerifyResult result = CodeCodec.verify(code);
 
 		if (!result.ok()) {
-			source.sendError(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§c" + result.reason()));
+			source.sendError(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7c" + result.reason()));
 			return 0;
 		}
 
 		// Reject codes already redeemed by this client.
 		if (service.alreadyRedeemed(code)) {
-			source.sendError(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§cThis code has already been redeemed."));
+			source.sendError(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7cThis code has already been redeemed."));
 			return 0;
 		}
 
 		service.grant(result.cosmeticId(), code);
 		service.equip(result.cosmeticId());
 
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§aRedeemed: ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§f" + result.cosmeticId()
-				+ " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7(" + result.rarity().displayName + ")"));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aRedeemed: \u00a7f" + result.cosmeticId()
+				+ " \u00a77(" + result.rarity().displayName + ")"));
 
 		// Push to the worker so other mod-users can see it.
 		java.util.UUID uuid = CosmeticStorage.localUuid();
@@ -130,16 +134,78 @@ public final class CosmeticCommands {
 	private static int scanFiles(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
 		int redeemed = CosmeticService.get().scanCodesFile();
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§fScanned codes file: "
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fScanned codes file: "
 				+ redeemed + " new code(s) redeemed."));
 		return redeemed;
 	}
 
 	private static int keyInfo(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§b[Frozen Recruiting] ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§fPublic key: "
-				+ (CodeCodec.isAvailable() ? CodeCodec.publicKeyFingerprint() : "ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§cnot configured")));
-		source.sendFeedback(TextHelper.parse("ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§7Config dir: " + FabricLoader.getInstance().getConfigDir().toAbsolutePath()));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fPublic key: "
+				+ (CodeCodec.isAvailable() ? CodeCodec.publicKeyFingerprint() : "\u00a7cnot configured")));
+		source.sendFeedback(TextHelper.parse("\u00a77Config dir: " + FabricLoader.getInstance().getConfigDir().toAbsolutePath()));
 		return 1;
+	}
+
+	private static int mintCode(CommandContext<FabricClientCommandSource> ctx) {
+		FabricClientCommandSource source = ctx.getSource();
+		MinecraftClient client = MinecraftClient.getInstance();
+
+		// Only the admin account can mint codes.
+		if (client == null || client.player == null
+				|| !"chaosfloh2011".equalsIgnoreCase(client.player.getName().getString())) {
+			source.sendError(TextHelper.parse("\u00a7cYou are not authorized to mint codes."));
+			return 0;
+		}
+
+		String player = StringArgumentType.getString(ctx, "player");
+		String cosmeticId = StringArgumentType.getString(ctx, "cosmetic");
+
+		CosmeticDef def = CosmeticCatalog.get(cosmeticId);
+		if (def == null) {
+			source.sendError(TextHelper.parse("\u00a7cUnknown cosmetic: " + cosmeticId));
+			source.sendFeedback(TextHelper.parse("\u00a77Run \u00a7f/frozenrecruiting cosmetic list \u00a77to see available cosmetics."));
+			return 0;
+		}
+
+		// Read the private key from an external file (never in the jar).
+		java.nio.file.Path keyFile = FabricLoader.getInstance().getConfigDir()
+				.resolve("frozen-recruiting").resolve("private.key");
+
+		if (!java.nio.file.Files.exists(keyFile)) {
+			source.sendError(TextHelper.parse("\u00a7cPrivate key not found at: " + keyFile));
+			source.sendFeedback(TextHelper.parse("\u00a77Place your private.key file there. Generate one with:"));
+			source.sendFeedback(TextHelper.parse("\u00a77java Codegen.java keygen --out <dir>"));
+			return 0;
+		}
+
+		try {
+			String privB64 = java.nio.file.Files.readString(keyFile).trim();
+			byte[] privBytes = java.util.Base64.getDecoder().decode(privB64);
+			java.security.spec.PKCS8EncodedKeySpec spec = new java.security.spec.PKCS8EncodedKeySpec(privBytes);
+			java.security.PrivateKey privateKey = java.security.KeyFactory.getInstance("Ed25519").generatePrivate(spec);
+
+			long issuedAt = System.currentTimeMillis();
+			String payload = player + "|" + cosmeticId + "|" + def.rarity().name() + "|" + issuedAt;
+			byte[] payloadBytes = payload.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+			java.security.Signature signer = java.security.Signature.getInstance("Ed25519");
+			signer.initSign(privateKey);
+			signer.update(payloadBytes);
+			byte[] signature = signer.sign();
+
+			String code = "FR1."
+					+ java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payloadBytes) + "."
+					+ java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aMinted code for \u00a7f" + player + "\u00a7a:"));
+			source.sendFeedback(Text.literal(code));
+			source.sendFeedback(TextHelper.parse("\u00a77Cosmetic: \u00a7f" + def.displayName() + " \u00a77(" + def.rarity().displayName + ")"));
+			source.sendFeedback(TextHelper.parse("\u00a77Give this code to " + player + ". They run: /frozenrecruiting cosmetic code " + code));
+			return 1;
+		} catch (Exception e) {
+			source.sendError(TextHelper.parse("\u00a7cFailed to mint code: " + e.getMessage()));
+			return 0;
+		}
 	}
 }

@@ -11,11 +11,12 @@ import net.minecraft.util.Formatting;
  * (verified against the asset index) so they render as real characters, not blank boxes.
  */
 public enum Rarity {
-	COMMON(0x808080, Formatting.GRAY, "○", "Common"),
-	UNCOMMON(0x55FF55, Formatting.GREEN, "◆", "Uncommon"),
-	RARE(0x5555FF, Formatting.BLUE, "✦", "Rare"),
-	EPIC(0xAA00AA, Formatting.DARK_PURPLE, "★", "Epic"),
-	LEGENDARY(0xFFAA00, Formatting.GOLD, "♛", "Legendary");
+	COMMON(0x808080, Formatting.GRAY, "\u25CB", "Common"),
+	UNCOMMON(0x55FF55, Formatting.GREEN, "\u25C6", "Uncommon"),
+	RARE(0x5555FF, Formatting.BLUE, "\u2726", "Rare"),
+	EPIC(0xAA00AA, Formatting.DARK_PURPLE, "\u2605", "Epic"),
+	LEGENDARY(0xFFAA00, Formatting.GOLD, "\u265B", "Legendary"),
+	MYTHIC(0x00FFFF, Formatting.AQUA, "\u2744", "Mythic");
 
 	public final int color;
 	public final Formatting formatting;

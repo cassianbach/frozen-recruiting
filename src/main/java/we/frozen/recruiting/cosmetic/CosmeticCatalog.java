@@ -19,7 +19,8 @@ public final class CosmeticCatalog {
 			new CosmeticDef("epic_star", "Epic Star", Rarity.EPIC, "A purple star."),
 			new CosmeticDef("epic_warden", "Warden", Rarity.EPIC, "A purple warden badge."),
 			new CosmeticDef("legendary_crown", "Legendary Crown", Rarity.LEGENDARY, "A gold crown."),
-			new CosmeticDef("legendary_frozen", "Frozen Elite", Rarity.LEGENDARY, "A gold frozen elite badge.")
+			new CosmeticDef("legendary_frozen", "Frozen Elite", Rarity.LEGENDARY, "A gold frozen elite badge."),
+			new CosmeticDef("mythic_frost", "Mythic Frost", Rarity.MYTHIC, "A cyan snowflake of mythic power.")
 	);
 
 	public static CosmeticDef get(String id) {

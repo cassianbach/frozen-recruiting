@@ -42,17 +42,17 @@ public final class RecruitCommands {
 		List<SentLog.Contact> contacts = SentLog.list();
 
 		if (contacts.isEmpty()) {
-			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo contacts yet. Send someone a message first."));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fNo contacts yet. Send someone a message first."));
 			return 1;
 		}
 
-		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §f" + contacts.size()
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7f" + contacts.size()
 				+ " contact(s), " + SentLog.totalUnread() + " unread."));
-		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting list §8- §7all contacts"));
-		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting unread §8- §7only unread"));
-		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting reply <player> <text>"));
-		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting markread §8- §7clear unread badges"));
-		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting clear §8- §7delete all history"));
+		source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting list \u00a78- \u00a77all contacts"));
+		source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting unread \u00a78- \u00a77only unread"));
+		source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting reply <player> <text>"));
+		source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting markread \u00a78- \u00a77clear unread badges"));
+		source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting clear \u00a78- \u00a77delete all history"));
 		return 1;
 	}
 
@@ -61,11 +61,11 @@ public final class RecruitCommands {
 		List<SentLog.Contact> contacts = SentLog.list();
 
 		if (contacts.isEmpty()) {
-			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo contacts yet."));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fNo contacts yet."));
 			return 0;
 		}
 
-		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §7sent to " + contacts.size() + ":"));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a77sent to " + contacts.size() + ":"));
 		for (SentLog.Contact c : contacts) {
 			source.sendFeedback(TextHelper.parse(formatContact(c)));
 		}
@@ -85,7 +85,7 @@ public final class RecruitCommands {
 		}
 
 		if (!any) {
-			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo unread replies."));
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fNo unread replies."));
 			return 0;
 		}
 
@@ -93,15 +93,15 @@ public final class RecruitCommands {
 	}
 
 	private static String formatContact(SentLog.Contact c) {
-		StringBuilder sb = new StringBuilder("§7 - §f");
+		StringBuilder sb = new StringBuilder("\u00a77 - \u00a7f");
 		sb.append(c.name);
 
 		if (c.unread > 0) {
-			sb.append(" §c(").append(c.unread).append(" unread)");
+			sb.append(" \u00a7c(").append(c.unread).append(" unread)");
 		}
 
 		if (c.lastReply != null && !c.lastReply.isBlank()) {
-			sb.append(" §8| §7\"").append(c.lastReplyPreview()).append("\"");
+			sb.append(" \u00a78| \u00a77\"").append(c.lastReplyPreview()).append("\"");
 		}
 
 		return sb.toString();
@@ -110,7 +110,7 @@ public final class RecruitCommands {
 	private static int markAllRead(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
 		SentLog.markAllRead();
-		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aAll replies marked as read."));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aAll replies marked as read."));
 		return 1;
 	}
 
@@ -118,7 +118,7 @@ public final class RecruitCommands {
 		FabricClientCommandSource source = ctx.getSource();
 		SentLog.clearAll();
 		ReplyPopup.clear();
-		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aSent history cleared."));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aSent history cleared."));
 		return 1;
 	}
 
@@ -135,7 +135,7 @@ public final class RecruitCommands {
 
 		client.getNetworkHandler().sendChatCommand("tell " + player + " " + message);
 		SentLog.recordSent(player);
-		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aSent to §f" + player + "§a."));
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aSent to \u00a7f" + player + "\u00a7a."));
 		return 1;
 	}
 }

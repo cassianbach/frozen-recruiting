@@ -38,8 +38,8 @@ public final class ReplyWatcher {
 			Pattern.compile("^\\[?->\\]?\\s*(.+?):\\s+(.*)$", Pattern.CASE_INSENSITIVE),
 	};
 
-	/** Legacy section colour code, e.g. {@code §a}. */
-	private static final char SECTION_SIGN = '§';
+	/** Legacy section colour code, e.g. {@code \u00a7a}. */
+	private static final char SECTION_SIGN = '\u00a7';
 
 	private ReplyWatcher() {
 	}
@@ -115,7 +115,7 @@ public final class ReplyWatcher {
 		return null;
 	}
 
-	/** Removes {@code §x} colour codes so formatting cannot break the match. */
+	/** Removes {@code \u00a7x} colour codes so formatting cannot break the match. */
 	public static String stripFormatting(String input) {
 		if (input == null || input.indexOf(SECTION_SIGN) < 0) {
 			return input == null ? "" : input;

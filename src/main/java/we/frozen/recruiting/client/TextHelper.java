@@ -5,8 +5,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 /**
- * Converts legacy section-sign colour codes ({@code §a}, {@code §l}, {@code §r}, ...) into
- * properly styled {@link Text} components. Modern Minecraft does not interpret {@code §} codes
+ * Converts legacy section-sign colour codes ({@code \u00a7a}, {@code \u00a7l}, {@code \u00a7r}, ...) into
+ * properly styled {@link Text} components. Modern Minecraft does not interpret {@code \u00a7} codes
  * inside {@link Text#literal(String)}, so every place that previously used them must go through
  * this helper instead.
  */
@@ -26,7 +26,7 @@ public final class TextHelper {
 
 		for (int i = 0; i < input.length(); i++) {
 			char c = input.charAt(i);
-			if (c == '§' && i + 1 < input.length()) {
+			if (c == '\u00a7' && i + 1 < input.length()) {
 				// Flush accumulated text with the current style.
 				if (current.length() > 0) {
 					MutableText segment = Text.literal(current.toString());
