@@ -38,3 +38,7 @@ tools/keys/
 tools/keys/
 tools/test-keys/
 
+
+# Wrangler local cache
+worker/.wrangler/
+
