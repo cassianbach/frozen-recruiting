@@ -208,4 +208,51 @@ public final class CosmeticCommands {
 			return 0;
 		}
 	}
+	private static int keygen(CommandContext<FabricClientCommandSource> ctx) {
+		FabricClientCommandSource source = ctx.getSource();
+		MinecraftClient client = MinecraftClient.getInstance();
+
+		// Only the admin account can generate keys.
+		if (client == null || client.player == null
+				|| !"chaosfloh2011".equalsIgnoreCase(client.player.getName().getString())) {
+			source.sendError(TextHelper.parse("\u00a7cYou are not authorized to generate keys."));
+			return 0;
+		}
+
+		try {
+			java.security.KeyPairGenerator kp = java.security.KeyPairGenerator.getInstance("Ed25519");
+			java.security.KeyPair pair = kp.generateKeyPair();
+
+			String privB64 = java.util.Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded());
+			String pubB64 = java.util.Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
+
+			java.nio.file.Path dir = FabricLoader.getInstance().getConfigDir().resolve("frozen-recruiting");
+			java.nio.file.Files.createDirectories(dir);
+
+			java.nio.file.Path privFile = dir.resolve("private.key");
+			java.nio.file.Path pubFile = dir.resolve("cosmetic-public-key.txt");
+
+			java.nio.file.Files.writeString(privFile, privB64);
+			java.nio.file.Files.writeString(pubFile, pubB64);
+
+			// Lock down the private key where the filesystem supports POSIX permissions.
+			try {
+				java.nio.file.Files.setPosixFilePermissions(privFile,
+						java.util.Set.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+								java.nio.file.attribute.PosixFilePermission.OWNER_WRITE));
+			} catch (UnsupportedOperationException ignored) {
+			}
+
+			source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7aKey pair generated!"));
+			source.sendFeedback(TextHelper.parse("\u00a77Private key: \u00a7f" + privFile));
+			source.sendFeedback(TextHelper.parse("\u00a77Public key : \u00a7f" + pubFile));
+			source.sendFeedback(TextHelper.parse("\u00a77You can now mint codes with:"));
+			source.sendFeedback(TextHelper.parse("\u00a77/frozenrecruiting cosmetic mint <player> <cosmetic>"));
+			return 1;
+		} catch (Exception e) {
+			source.sendError(TextHelper.parse("\u00a7cFailed to generate key: " + e.getMessage()));
+			return 0;
+		}
+	}
+
 }

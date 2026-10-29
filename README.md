@@ -14,16 +14,16 @@ GUI, then **right-click a player** to send it to them as `/tell`.
 
 Grab the jars from the [Releases page](https://github.com/cassianbach/frozen-recruiting/releases).
 
-Requires **Fabric API** — it depends on `fabric-api`, so vanilla will not load it.
+Requires **Fabric API** â€” it depends on `fabric-api`, so vanilla will not load it.
 
 ---
 
 ## How to use
 
-1. Press **G** to open the menu. Rebind under *Options → Controls → Frozen Recruiting*.
+1. Press **G** to open the menu. Rebind under *Options â†’ Controls â†’ Frozen Recruiting*.
 2. Type your message.
 3. Press **Save** (or `Enter`).
-4. **Right-click any player** — the message is sent to them.
+4. **Right-click any player** â€” the message is sent to them.
 
 **Shift + right-click** falls through to the normal interaction, so servers that use
 right-click for ping keep working.
@@ -34,8 +34,8 @@ right-click for ping keep working.
 
 The menu has two tabs:
 
-- **Compose** — write the message you are about to send.
-- **Sent** — everyone you have messaged, with their last reply, an unread badge, and an
+- **Compose** â€” write the message you are about to send.
+- **Sent** â€” everyone you have messaged, with their last reply, an unread badge, and an
   inline reply field so you can `/tell` them again without leaving the menu.
 
 History persists to `config/frozen-recruiting.json`.
@@ -45,7 +45,7 @@ is not missed.
 
 ### How replies are detected
 
-Fabric's client receive event discards the sender UUID before it fires — the only signal
+Fabric's client receive event discards the sender UUID before it fires â€” the only signal
 left is the rendered chat text. The matcher therefore supports the formats seen in practice:
 
 | Format | Used by |
@@ -84,14 +84,13 @@ not trigger a popup.
 A client-side cosmetic system with rarity tiers. Cosmetics are obtainable **only via codes**
 that you (the admin) mint.
 
-**Rarity tiers:** Common (grey) → Uncommon (green) → Rare (blue) → Epic (purple) → Legendary (gold).
+**Rarity tiers:** Common (grey) â†’ Uncommon (green) â†’ Rare (blue) â†’ Epic (purple) â†’ Legendary (gold).
 
 **How it works:**
-1. You generate a keypair with the signer tool (`tools/Codegen.java`).
-2. You embed the public key in the mod's resources.
-3. You mint codes for specific players: `java Codegen.java mint --key private.key --player Steve --cosmetic legendary_crown`
-4. The player redeems the code in-game: `/frozenrecruiting cosmetic code <code>`
-5. A badge appears above their head.
+1. Run /frozenrecruiting cosmetic keygen in-game (only works for the admin account).
+2. Mint codes: /frozenrecruiting cosmetic mint <player> <cosmetic> (e.g. /frozenrecruiting cosmetic mint Steve legendary_crown)
+3. The player redeems the code: /frozenrecruiting cosmetic code <code> (or drop it in codes.txt)
+4. A badge appears above their head.
 
 **Redemption paths:**
 - In-game: `/frozenrecruiting cosmetic code <code>`
@@ -112,7 +111,7 @@ URL in `config/frozen-recruiting/cosmetic-api-url.txt`. Without it, cosmetics ar
 The common way to do this (including the original version of this mod) registers a
 Fabric `UseEntityCallback` and returns `ActionResult.PASS`. `PASS` means *"carry on with the
 vanilla interaction"*, so the vanilla interact packet still gets sent to the server. A
-server-side ping plugin sees that packet and runs its handler — so you get the tell **and**
+server-side ping plugin sees that packet and runs its handler â€” so you get the tell **and**
 the ping at the same time.
 
 Frozen Recruiting returns `ActionResult.SUCCESS` instead. Fabric injects that callback as a
@@ -121,7 +120,7 @@ entirely. The server never sees the vanilla right-click, so a server ping plugin
 fires.
 
 Message delivery uses `ClientPlayNetworkHandler#sendChatCommand`, which builds a
-`CommandExecutionC2SPacket` — byte-identical to you typing `/tell` yourself. That means chat
+`CommandExecutionC2SPacket` â€” byte-identical to you typing `/tell` yourself. That means chat
 plugins that only intercept the chat-message packet path do not interfere.
 
 ---
@@ -157,9 +156,9 @@ worker/index.js                    Cloudflare Worker for cross-client visibility
 
 Only two classes differ per version:
 
-- `RecruitingScreen` — the GUI
-- `RecruitingInteraction` — keybind + right-click handling
-- `OverheadBadgeRenderer` — rendering (uses different APIs per version)
+- `RecruitingScreen` â€” the GUI
+- `RecruitingInteraction` â€” keybind + right-click handling
+- `OverheadBadgeRenderer` â€” rendering (uses different APIs per version)
 
 They differ because of genuine API breaks:
 
@@ -177,4 +176,4 @@ They differ because of genuine API breaks:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT â€” see [LICENSE](LICENSE).
