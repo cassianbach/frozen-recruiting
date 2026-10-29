@@ -25,5 +25,16 @@
 	"frozen_recruiting.msg.unnamed": "That player has no username.",
 	"frozen_recruiting.msg.not_server": "You must be connected to a server.",
 	"frozen_recruiting.msg.discord_opened": "Opening Discord...",
-	"frozen_recruiting.msg.discord_failed": "Could not open Discord invite."
+	"frozen_recruiting.msg.discord_failed": "Could not open Discord invite.",
+
+	"frozen_recruiting.cosmetic.list_empty": "You own no cosmetics. Redeem a code with /frozenrecruiting cosmetic code <code>.",
+	"frozen_recruiting.cosmetic.redeemed": "Redeemed: %s (%s)",
+	"frozen_recruiting.cosmetic.code_invalid": "%s",
+	"frozen_recruiting.cosmetic.code_already_redeemed": "This code has already been redeemed.",
+	"frozen_recruiting.cosmetic.equipped": "Equipped: %s (%s)",
+	"frozen_recruiting.cosmetic.not_owned": "You do not own \"%s\".",
+	"frozen_recruiting.cosmetic.unequipped": "Badge unequipped.",
+	"frozen_recruiting.cosmetic.scanned": "Scanned codes file: %s new code(s) redeemed.",
+	"frozen_recruiting.cosmetic.keyinfo": "Public key: %s",
+	"frozen_recruiting.cosmetic.no_key": "No public key configured — code redemption disabled."
 }

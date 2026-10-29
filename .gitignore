@@ -29,3 +29,12 @@ run-data/
 lib/
 dist/
 
+
+# Cosmetic signing key (private - NEVER commit)
+tools/keys/
+
+
+# Cosmetic signing keys (private - NEVER commit)
+tools/keys/
+tools/test-keys/
+

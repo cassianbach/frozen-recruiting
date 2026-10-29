@@ -28,6 +28,12 @@ import org.lwjgl.glfw.GLFW;
 public final class RecruitingInteraction {
 	private static KeyBinding openMenuKey;
 
+	/**
+	 * Set when a right-click on a player was handled by this mod, so the held shield can be
+	 * dropped on the next tick instead of sitting there blocking the view.
+	 */
+	private static boolean dropShieldNextTick = false;
+
 	private RecruitingInteraction() {
 	}
 
@@ -44,6 +50,17 @@ public final class RecruitingInteraction {
 				openMenuKey.setPressed(false);
 				openMenuClient(client);
 			}
+
+			// The vanilla "use item" path is what raises a shield. It runs after the
+			// interaction we already handled, so drop the item use here to make sure the
+			// shield never ends up blocking the screen.
+			if (dropShieldNextTick) {
+				dropShieldNextTick = false;
+
+				if (client.player != null && client.player.isUsingItem()) {
+					client.player.stopUsingItem();
+				}
+			}
 		});
 
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
@@ -53,13 +70,14 @@ public final class RecruitingInteraction {
 
 			MinecraftClient client = MinecraftClient.getInstance();
 
-			// Shift + right-click keeps the vanilla interaction alive so servers that use
-			// right-click for ping keep working.
-			if (isSneaking(client, player)) {
+			if (!(entity instanceof PlayerEntity target)) {
 				return ActionResult.PASS;
 			}
 
-			if (!(entity instanceof PlayerEntity target)) {
+			// Shift + right-click keeps the vanilla interaction alive so servers that use
+			// right-click for ping keep working.
+			if (isSneaking(client, player)) {
+				dropShieldNextTick = true;
 				return ActionResult.PASS;
 			}
 
@@ -67,10 +85,12 @@ public final class RecruitingInteraction {
 				ChatFeedback.error(client, "frozen_recruiting.msg.empty");
 				// Still cancel: otherwise the interact packet goes out and any server-side
 				// right-click handler fires while the player only asked for a message send.
+				dropShieldNextTick = true;
 				return ActionResult.SUCCESS;
 			}
 
 			RecruitMessageStore.sendTo(target.getGameProfile().getName());
+			dropShieldNextTick = true;
 			return ActionResult.SUCCESS;
 		});
 	}

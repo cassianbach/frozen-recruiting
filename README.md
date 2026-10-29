@@ -7,7 +7,7 @@ GUI, then **right-click a player** to send it to them as `/tell`.
 
 ## Downloads
 
-| Minecraft | Loader | Fabric API | Jar |
+| Minecraft | Fabric Loader | Fabric API | File |
 |---|---|---|---|
 | **1.21.11** | 0.19.5+ | 0.141.6+1.21.11 | `frozen-recruiting-1.21.11.jar` |
 | **1.21.1** | 0.16.14+ | 0.116.17+1.21.1 | `frozen-recruiting-1.21.1.jar` |
@@ -68,7 +68,42 @@ not trigger a popup.
 /frozenrecruiting markread   clear all unread badges
 /frozenrecruiting clear      delete all history
 /frozenrecruiting reply <player> <text>
+
+/frozenrecruiting cosmetic list
+/frozenrecruiting cosmetic equip <id>
+/frozenrecruiting cosmetic unequip
+/frozenrecruiting cosmetic code <code>
+/frozenrecruiting cosmetic scan
+/frozenrecruiting cosmetic keyinfo
 ```
+
+---
+
+### Cosmetics
+
+A client-side cosmetic system with rarity tiers. Cosmetics are obtainable **only via codes**
+that you (the admin) mint.
+
+**Rarity tiers:** Common (grey) → Uncommon (green) → Rare (blue) → Epic (purple) → Legendary (gold).
+
+**How it works:**
+1. You generate a keypair with the signer tool (`tools/Codegen.java`).
+2. You embed the public key in the mod's resources.
+3. You mint codes for specific players: `java Codegen.java mint --key private.key --player Steve --cosmetic legendary_crown`
+4. The player redeems the code in-game: `/frozenrecruiting cosmetic code <code>`
+5. A badge appears above their head.
+
+**Redemption paths:**
+- In-game: `/frozenrecruiting cosmetic code <code>`
+- File: drop codes into `<gameDir>/config/frozen-recruiting/codes.txt` (one per line), then
+  `/frozenrecruiting cosmetic scan`
+
+**Code security:** Codes are Ed25519-signed. The private key never ships in the mod jar, so
+only you can mint valid codes. Codes are bound to the player name, so they can't be stolen.
+
+**Cloudflare Worker (cross-client visibility):** The `worker/` directory contains a Cloudflare
+Worker that stores UUID->cosmetic mappings. Deploy it to your Cloudflare account and set the
+URL in `config/frozen-recruiting/cosmetic-api-url.txt`. Without it, cosmetics are self-only.
 
 ---
 
@@ -116,12 +151,15 @@ The jar lands in `lib/frozen-recruiting-<mc version>.jar` (and in `build/libs/`)
 src/main/java/                     shared code (identical on both versions)
 versions/1.21.11/src/main/java/    sources that differ on 1.21.11
 versions/1.21.1/src/main/java/     sources that differ on 1.21.1
+tools/Codegen.java                 standalone signer (run with `java Codegen.java`)
+worker/index.js                    Cloudflare Worker for cross-client visibility
 ```
 
 Only two classes differ per version:
 
 - `RecruitingScreen` — the GUI
 - `RecruitingInteraction` — keybind + right-click handling
+- `OverheadBadgeRenderer` — rendering (uses different APIs per version)
 
 They differ because of genuine API breaks:
 
@@ -132,9 +170,8 @@ They differ because of genuine API breaks:
 | `Screen.keyPressed` | `(int, int, int)` | `(KeyInput)` |
 | `InputUtil.isKeyPressed` | `(long handle, int)` | `(Window, int)` |
 | `Screen.renderBackground` | applies a full-screen blur post-process | no longer called |
-
-The last one is why 1.21.1 overrides `renderBackground` with a no-op — otherwise the whole
-panel renders blurred and out of focus.
+| `WorldRenderEvents` | `v1` package | `v1.world` package |
+| `Entity.getPos()` | exists | renamed to `getEntityPos()` |
 
 ---
 
