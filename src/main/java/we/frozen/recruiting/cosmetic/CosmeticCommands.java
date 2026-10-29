@@ -37,7 +37,8 @@ public final class CosmeticCommands {
 												.then(ClientCommandManager.argument("cosmetic", StringArgumentType.word())
 														.executes(CosmeticCommands::mintCode))))
 								.then(ClientCommandManager.literal("scan").executes(CosmeticCommands::scanFiles))
-								.then(ClientCommandManager.literal("keyinfo").executes(CosmeticCommands::keyInfo)))));
+								.then(ClientCommandManager.literal("keyinfo").executes(CosmeticCommands::keyInfo))
+								.then(ClientCommandManager.literal("keygen").executes(CosmeticCommands::keygen)))));
 	}
 
 	private static int listOwn(CommandContext<FabricClientCommandSource> ctx) {
@@ -208,6 +209,7 @@ public final class CosmeticCommands {
 			return 0;
 		}
 	}
+
 	private static int keygen(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -254,5 +256,4 @@ public final class CosmeticCommands {
 			return 0;
 		}
 	}
-
 }
