@@ -1,4 +1,4 @@
-// frozen-recruiting — Cloudflare Worker for cross-client cosmetic visibility.
+// frozen-recruiting â€” Cloudflare Worker for cross-client cosmetic visibility.
 //
 // Deploy: wrangler deploy
 // Storage: a Workers KV namespace bound as COSMETICS_KV.
@@ -59,7 +59,7 @@ async function handleRegister(request, env) {
     // Verify the code signature locally. We trust only codes signed by the embedded public key.
     // NOTE: Cloudflare Workers do not ship Ed25519 verification in the standard WebCrypto
     // (SubtleCrypto supports Ed25519 in some runtimes). If unavailable, fall back to
-    // trusting the client — the client already verified the signature locally.
+    // trusting the client â€” the client already verified the signature locally.
     const parts = code.split(".");
     if (parts.length !== 3 || parts[0] !== "FR1") {
         return cors(json({ error: "invalid code format" }, 400));
@@ -116,8 +116,3 @@ function cors(res) {
     res.headers.set("Access-Control-Allow-Headers", "Content-Type");
     return res;
 }
-'@
-$workerDir = "D:\Development\mc\frozen-recruiting-repo\worker"
-New-Item -ItemType Directory -Force -Path $workerDir | Out-Null
-[System.IO.File]::WriteAllText("$workerDir\index.js", $src, (New-Object System.Text.UTF8Encoding($false)))
-"written worker/index.js"

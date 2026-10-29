@@ -1,0 +1,7 @@
+name = "frozen-recruiting"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "COSMETICS_KV"
+id = "e5bd164c11e241da85bae4bb82dcb060"

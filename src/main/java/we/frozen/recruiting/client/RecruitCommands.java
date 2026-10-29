@@ -42,17 +42,17 @@ public final class RecruitCommands {
 		List<SentLog.Contact> contacts = SentLog.list();
 
 		if (contacts.isEmpty()) {
-			source.sendFeedback(Text.literal("§b[Frozen Recruiting] §fNo contacts yet. Send someone a message first."));
+			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo contacts yet. Send someone a message first."));
 			return 1;
 		}
 
-		source.sendFeedback(Text.literal("§b[Frozen Recruiting] §f" + contacts.size()
+		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §f" + contacts.size()
 				+ " contact(s), " + SentLog.totalUnread() + " unread."));
-		source.sendFeedback(Text.literal("§7/frozenrecruiting list §8- §7all contacts"));
-		source.sendFeedback(Text.literal("§7/frozenrecruiting unread §8- §7only unread"));
-		source.sendFeedback(Text.literal("§7/frozenrecruiting reply <player> <text>"));
-		source.sendFeedback(Text.literal("§7/frozenrecruiting markread §8- §7clear unread badges"));
-		source.sendFeedback(Text.literal("§7/frozenrecruiting clear §8- §7delete all history"));
+		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting list §8- §7all contacts"));
+		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting unread §8- §7only unread"));
+		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting reply <player> <text>"));
+		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting markread §8- §7clear unread badges"));
+		source.sendFeedback(TextHelper.parse("§7/frozenrecruiting clear §8- §7delete all history"));
 		return 1;
 	}
 
@@ -61,13 +61,13 @@ public final class RecruitCommands {
 		List<SentLog.Contact> contacts = SentLog.list();
 
 		if (contacts.isEmpty()) {
-			source.sendFeedback(Text.literal("§b[Frozen Recruiting] §fNo contacts yet."));
+			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo contacts yet."));
 			return 0;
 		}
 
-		source.sendFeedback(Text.literal("§b[Frozen Recruiting] §7sent to " + contacts.size() + ":"));
+		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §7sent to " + contacts.size() + ":"));
 		for (SentLog.Contact c : contacts) {
-			source.sendFeedback(Text.literal(formatContact(c)));
+			source.sendFeedback(TextHelper.parse(formatContact(c)));
 		}
 
 		return contacts.size();
@@ -79,13 +79,13 @@ public final class RecruitCommands {
 
 		for (SentLog.Contact c : SentLog.list()) {
 			if (c.unread > 0) {
-				source.sendFeedback(Text.literal(formatContact(c)));
+				source.sendFeedback(TextHelper.parse(formatContact(c)));
 				any = true;
 			}
 		}
 
 		if (!any) {
-			source.sendFeedback(Text.literal("§b[Frozen Recruiting] §fNo unread replies."));
+			source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §fNo unread replies."));
 			return 0;
 		}
 
@@ -110,7 +110,7 @@ public final class RecruitCommands {
 	private static int markAllRead(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();
 		SentLog.markAllRead();
-		source.sendFeedback(Text.literal("§b[Frozen Recruiting] §aAll replies marked as read."));
+		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aAll replies marked as read."));
 		return 1;
 	}
 
@@ -118,7 +118,7 @@ public final class RecruitCommands {
 		FabricClientCommandSource source = ctx.getSource();
 		SentLog.clearAll();
 		ReplyPopup.clear();
-		source.sendFeedback(Text.literal("§b[Frozen Recruiting] §aSent history cleared."));
+		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aSent history cleared."));
 		return 1;
 	}
 
@@ -129,13 +129,13 @@ public final class RecruitCommands {
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		if (client.getNetworkHandler() == null) {
-			source.sendError(Text.literal("Not connected to a server."));
+			source.sendError(TextHelper.parse("Not connected to a server."));
 			return 0;
 		}
 
 		client.getNetworkHandler().sendChatCommand("tell " + player + " " + message);
 		SentLog.recordSent(player);
-		source.sendFeedback(Text.literal("§b[Frozen Recruiting] §aSent to §f" + player + "§a."));
+		source.sendFeedback(TextHelper.parse("§b[Frozen Recruiting] §aSent to §f" + player + "§a."));
 		return 1;
 	}
 }

@@ -27,6 +27,6 @@ public final class ChatFeedback {
 			return;
 		}
 
-		client.inGameHud.getChatHud().addMessage(Text.literal(PREFIX + message));
+		client.inGameHud.getChatHud().addMessage(TextHelper.parse(PREFIX + message));
 	}
 }
