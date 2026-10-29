@@ -4,8 +4,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.gson.Gson;
@@ -15,8 +18,13 @@ import net.fabricmc.loader.api.FabricLoader;
 /**
  * Cosmetic provider that queries a Cloudflare Worker for cross-client cosmetic data.
  *
- * <p>Optimized for large servers: caches aggressively, only fetches once per player per TTL
- * window, and serves stale data while refreshing in the background.
+ * <p>Optimized for large servers:
+ * <ul>
+ *   <li>Batch lookups: accumulates UUIDs and sends them in one request (up to 50 per batch)</li>
+ *   <li>Long TTL: 1 hour positive, 2 hours negative</li>
+ *   <li>Fetch guard: only one fetch per UUID at a time</li>
+ *   <li>Stale-while-revalidate: serves stale data while refreshing in background</li>
+ * </ul>
  */
 public final class CloudflareCosmeticProvider implements CosmeticProvider {
 	private static final Gson GSON = new Gson();
@@ -25,11 +33,17 @@ public final class CloudflareCosmeticProvider implements CosmeticProvider {
 	private static final long POSITIVE_TTL_MILLIS = 3_600_000L; // 1 hour
 	/** Negative cache (player has no cosmetic): 2 hours. */
 	private static final long NEGATIVE_TTL_MILLIS = 7_200_000L; // 2 hours
+	/** Max UUIDs per batch request. */
+	private static final int BATCH_SIZE = 50;
+	/** Delay before flushing the pending batch (ms). */
+	private static final long BATCH_DELAY_MILLIS = 100L;
 
 	private final String baseUrl;
 	private final HttpClient client;
 	private final ConcurrentHashMap<UUID, CachedProfile> cache = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<UUID, AtomicBoolean> fetching = new ConcurrentHashMap<>();
+	private final ConcurrentLinkedQueue<UUID> pendingBatch = new ConcurrentLinkedQueue<>();
+	private final AtomicBoolean batchScheduled = new AtomicBoolean(false);
 
 	public CloudflareCosmeticProvider(String baseUrl) {
 		this.baseUrl = baseUrl == null ? "" : baseUrl.trim();
@@ -65,13 +79,11 @@ public final class CloudflareCosmeticProvider implements CosmeticProvider {
 			return cached.profile;
 		}
 
-		// Stale-while-revalidate: serve stale data immediately, fetch in background.
-		// Only trigger one fetch per player at a time (fetch guard).
-		if (cached == null || cached.isExpired()) {
-			AtomicBoolean flag = fetching.computeIfAbsent(playerUuid, k -> new AtomicBoolean(false));
-			if (flag.compareAndSet(false, true)) {
-				fetchAsync(playerUuid, flag);
-			}
+		// Stale-while-revalidate: serve stale data immediately, batch-fetch in background.
+		AtomicBoolean flag = fetching.computeIfAbsent(playerUuid, k -> new AtomicBoolean(false));
+		if (flag.compareAndSet(false, true)) {
+			pendingBatch.offer(playerUuid);
+			scheduleBatch();
 		}
 
 		// Return stale data while fetching (null if never fetched).
@@ -87,6 +99,7 @@ public final class CloudflareCosmeticProvider implements CosmeticProvider {
 	public void refresh() {
 		cache.clear();
 		fetching.clear();
+		pendingBatch.clear();
 	}
 
 	/**
@@ -118,9 +131,42 @@ public final class CloudflareCosmeticProvider implements CosmeticProvider {
 				});
 	}
 
-	private void fetchAsync(UUID playerUuid, AtomicBoolean flag) {
+	private void scheduleBatch() {
+		if (batchScheduled.compareAndSet(false, true)) {
+			// Schedule a delayed batch flush to collect more UUIDs.
+			new Thread(() -> {
+				try {
+					Thread.sleep(BATCH_DELAY_MILLIS);
+				} catch (InterruptedException ignored) {
+				}
+
+				flushBatch();
+				batchScheduled.set(false);
+			}, "frozen-recruiting-batch").start();
+		}
+	}
+
+	private void flushBatch() {
+		// Collect all pending UUIDs (up to BATCH_SIZE).
+		List<UUID> batch = new ArrayList<>();
+		UUID uuid;
+		while ((uuid = pendingBatch.poll()) != null && batch.size() < BATCH_SIZE) {
+			batch.add(uuid);
+		}
+
+		if (batch.isEmpty()) {
+			return;
+		}
+
+		// Build the batch URL.
+		StringBuilder sb = new StringBuilder(baseUrl + "/lookup?uuids=");
+		for (int i = 0; i < batch.size(); i++) {
+			if (i > 0) sb.append(",");
+			sb.append(batch.get(i));
+		}
+
 		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create(baseUrl + "/lookup?uuid=" + playerUuid))
+				.uri(URI.create(sb.toString()))
 				.GET()
 				.build();
 
@@ -129,21 +175,37 @@ public final class CloudflareCosmeticProvider implements CosmeticProvider {
 					try {
 						if (r.statusCode() == 200) {
 							com.google.gson.JsonObject obj = new com.google.gson.Gson().fromJson(r.body(), com.google.gson.JsonObject.class);
-							String cosmetic = obj.has("cosmetic") ? obj.get("cosmetic").getAsString() : null;
-							String name = obj.has("name") ? obj.get("name").getAsString() : null;
-							CosmeticProfile profile = buildProfile(name, cosmetic);
-							cache.put(playerUuid, new CachedProfile(profile, System.currentTimeMillis(), cosmetic != null));
+							for (UUID u : batch) {
+								String key = u.toString();
+								if (obj.has(key) && !obj.get(key).isJsonNull()) {
+									com.google.gson.JsonObject entry = obj.getAsJsonObject(key);
+									String cosmetic = entry.has("cosmetic") ? entry.get("cosmetic").getAsString() : null;
+									String name = entry.has("name") ? entry.get("name").getAsString() : null;
+									cache.put(u, new CachedProfile(buildProfile(name, cosmetic), System.currentTimeMillis(), true));
+								} else {
+									// 404 = no cosmetic. Cache as negative.
+									cache.put(u, new CachedProfile(null, System.currentTimeMillis(), false));
+								}
+							}
 						} else {
-							// 404 = no cosmetic. Cache as negative.
-							cache.put(playerUuid, new CachedProfile(null, System.currentTimeMillis(), false));
+							// Error — cache all as negative to avoid hammering.
+							for (UUID u : batch) {
+								cache.put(u, new CachedProfile(null, System.currentTimeMillis(), false));
+							}
 						}
 					} catch (Exception ignored) {
 					} finally {
-						flag.set(false);
+						for (UUID u : batch) {
+							AtomicBoolean flag = fetching.get(u);
+							if (flag != null) flag.set(false);
+						}
 					}
 				})
 				.exceptionally(e -> {
-					flag.set(false);
+					for (UUID u : batch) {
+						AtomicBoolean flag = fetching.get(u);
+						if (flag != null) flag.set(false);
+					}
 					return null;
 				});
 	}
