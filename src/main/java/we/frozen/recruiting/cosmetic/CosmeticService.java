@@ -96,14 +96,26 @@ public final class CosmeticService {
 			redeemedCodes.add(code.trim());
 			saveRedeemedCodes();
 		}
+
+		// Keep the provider in sync so the badge renders immediately.
+		if (provider instanceof LocalCosmeticProvider local) {
+			local.refresh();
+		}
 	}
 
 	public boolean equip(String cosmeticId) {
-		return storage.equip(cosmeticId);
+		boolean ok = storage.equip(cosmeticId);
+		if (ok && provider instanceof LocalCosmeticProvider local) {
+			local.refresh();
+		}
+		return ok;
 	}
 
 	public void unequip() {
 		storage.unequip();
+		if (provider instanceof LocalCosmeticProvider local) {
+			local.refresh();
+		}
 	}
 
 	public boolean alreadyRedeemed(String code) {
