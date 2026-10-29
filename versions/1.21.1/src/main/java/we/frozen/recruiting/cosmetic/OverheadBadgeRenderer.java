@@ -46,6 +46,16 @@ public final class OverheadBadgeRenderer {
 		net.minecraft.client.render.VertexConsumerProvider consumers = ctx.consumers();
 
 		for (PlayerEntity player : client.world.getPlayers()) {
+			Vec3d pos = player.getPos().add(0, player.getHeight() + 0.5, 0);
+
+			// Distance culling: skip players too far away.
+			double dx = pos.x - camPos.x;
+			double dy = pos.y - camPos.y;
+			double dz = pos.z - camPos.z;
+			if (dx * dx + dy * dy + dz * dz > 64 * 64) {
+				continue;
+			}
+
 			CosmeticProfile profile = provider.getProfile(player.getUuid());
 			if (profile == null || profile.equippedCosmetic == null || profile.equippedCosmetic.isBlank()) {
 				continue;
@@ -53,17 +63,6 @@ public final class OverheadBadgeRenderer {
 
 			CosmeticDef cosmetic = CosmeticCatalog.get(profile.equippedCosmetic);
 			if (cosmetic == null) {
-				continue;
-			}
-
-			Vec3d pos = player.getPos().add(0, player.getHeight() + 0.5, 0);
-
-			double dx = pos.x - camPos.x;
-			double dy = pos.y - camPos.y;
-			double dz = pos.z - camPos.z;
-
-			double distSq = dx * dx + dy * dy + dz * dz;
-			if (distSq > 64 * 64) {
 				continue;
 			}
 

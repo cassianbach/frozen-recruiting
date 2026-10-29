@@ -13,9 +13,6 @@ import net.minecraft.util.math.Vec3d;
  * Renders an overhead badge above any player whose cosmetic is known to the configured
  * {@link CosmeticProvider}. Works for the local player (self-only) today and for everyone once a
  * relay provider is plugged in.
- *
- * <p>Uses {@code WorldRenderEvents.AFTER_ENTITIES} and the command queue's {@code submitLabel}
- * method, which is the vanilla approach in 1.21.10+.
  */
 public final class OverheadBadgeRenderer {
 	private static CosmeticProvider provider;
@@ -47,6 +44,14 @@ public final class OverheadBadgeRenderer {
 		TextRenderer textRenderer = client.textRenderer;
 
 		for (PlayerEntity player : client.world.getPlayers()) {
+			Vec3d pos = player.getEntityPos().add(0, player.getHeight() + 0.5, 0);
+
+			// Distance culling: skip players too far away (avoids querying the worker).
+			double distSq = pos.squaredDistanceTo(camPos);
+			if (distSq > 64 * 64) {
+				continue;
+			}
+
 			CosmeticProfile profile = provider.getProfile(player.getUuid());
 			if (profile == null || profile.equippedCosmetic == null || profile.equippedCosmetic.isBlank()) {
 				continue;
@@ -54,14 +59,6 @@ public final class OverheadBadgeRenderer {
 
 			CosmeticDef cosmetic = CosmeticCatalog.get(profile.equippedCosmetic);
 			if (cosmetic == null) {
-				continue;
-			}
-
-			Vec3d pos = player.getEntityPos().add(0, player.getHeight() + 0.5, 0);
-
-			// Distance culling: skip players too far away.
-			double distSq = pos.squaredDistanceTo(camPos);
-			if (distSq > 64 * 64) {
 				continue;
 			}
 
