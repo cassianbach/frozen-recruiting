@@ -30,8 +30,11 @@ public final class CosmeticCommands {
 												.executes(CosmeticCommands::equip)))
 								.then(ClientCommandManager.literal("unequip").executes(CosmeticCommands::unequip))
 								.then(ClientCommandManager.literal("code")
-										.then(ClientCommandManager.argument("code", StringArgumentType.greedyString())
-												.executes(CosmeticCommands::redeemCode)))
+								.then(ClientCommandManager.argument("code", StringArgumentType.greedyString())
+								.executes(CosmeticCommands::redeemCode)))
+								.then(ClientCommandManager.literal("codes")
+								.then(ClientCommandManager.argument("codes", StringArgumentType.greedyString())
+								.executes(CosmeticCommands::redeemCodes)))
 								.then(ClientCommandManager.literal("mint")
 										.then(ClientCommandManager.argument("player", StringArgumentType.word())
 												.then(ClientCommandManager.argument("cosmetic", StringArgumentType.word())
@@ -130,6 +133,57 @@ public final class CosmeticCommands {
 		}
 
 		return 1;
+	}
+
+	private static int redeemCodes(CommandContext<FabricClientCommandSource> ctx) {
+		FabricClientCommandSource source = ctx.getSource();
+		String allCodes = StringArgumentType.getString(ctx, "codes");
+
+		int redeemed = 0;
+		int failed = 0;
+		StringBuilder sb = new StringBuilder();
+
+		// Split on whitespace (spaces, newlines, tabs).
+		for (String code : allCodes.split("\\s+")) {
+			code = code.trim();
+			if (code.isEmpty()) {
+				continue;
+			}
+
+			CosmeticService service = CosmeticService.get();
+			CodeCodec.VerifyResult result = CodeCodec.verify(code);
+
+			if (!result.ok()) {
+				failed++;
+				continue;
+			}
+
+			if (service.alreadyRedeemed(code)) {
+				failed++;
+				continue;
+			}
+
+			service.grant(result.cosmeticId(), code);
+			service.equip(result.cosmeticId());
+			redeemed++;
+
+			// Push to the worker.
+			java.util.UUID uuid = CosmeticStorage.localUuid();
+			if (uuid != null) {
+				CosmeticProvider provider = service.provider();
+				if (provider instanceof CloudflareCosmeticProvider cf) {
+					cf.register(uuid, result.cosmeticId(), result.rarity(),
+							MinecraftClient.getInstance().player.getName().getString());
+				}
+			}
+		}
+
+		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fRedeemed " + redeemed + " code(s)."));
+		if (failed > 0) {
+			source.sendFeedback(TextHelper.parse("\u00a77" + failed + " code(s) were invalid or already redeemed."));
+		}
+
+		return redeemed;
 	}
 
 	private static int scanFiles(CommandContext<FabricClientCommandSource> ctx) {
