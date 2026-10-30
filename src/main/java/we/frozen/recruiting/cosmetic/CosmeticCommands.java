@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import we.frozen.recruiting.client.ChatFeedback;
 import we.frozen.recruiting.client.TextHelper;
 /**
  * {@code /frozenrecruiting cosmetic ...} subcommands for managing cosmetics.
@@ -159,6 +160,100 @@ public final class CosmeticCommands {
 		source.sendFeedback(TextHelper.parse("\u00a7b[Frozen Recruiting] \u00a7fScanned codes file: "
 				+ redeemed + " new code(s) redeemed."));
 		return redeemed;
+	}
+	public static void redeemCodeFromGui(String code) {
+		CosmeticService service = CosmeticService.get();
+		CodeCodec.VerifyResult result = CodeCodec.verify(code);
+		if (!result.ok()) {
+			ChatFeedback.error(MinecraftClient.getInstance(), "frozen_recruiting.cosmetic.code_invalid", result.reason());
+			return;
+		}
+		if (service.alreadyRedeemed(code)) {
+			ChatFeedback.error(MinecraftClient.getInstance(), "frozen_recruiting.cosmetic.code_already_redeemed");
+			return;
+		}
+		service.grant(result.cosmeticId(), code);
+		service.equip(result.cosmeticId());
+		ChatFeedback.success(MinecraftClient.getInstance(), "frozen_recruiting.cosmetic.redeemed",
+				result.cosmeticId(), result.rarity().displayName);
+		java.util.UUID uuid = CosmeticStorage.localUuid();
+		if (uuid != null) {
+			CosmeticProvider provider = service.provider();
+			if (provider instanceof CloudflareCosmeticProvider cf) {
+				cf.register(uuid, result.cosmeticId(), result.rarity(),
+						MinecraftClient.getInstance().player.getName().getString());
+			}
+		}
+	}
+	public static void mintCodeFromGui(String player, String cosmetic) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client == null || client.player == null
+				|| !"chaosfloh2011".equalsIgnoreCase(client.player.getName().getString())) {
+			ChatFeedback.error(client, "frozen_recruiting.msg.empty");
+			return;
+		}
+		CosmeticDef def = CosmeticCatalog.get(cosmetic);
+		if (def == null) {
+			ChatFeedback.error(client, "frozen_recruiting.cosmetic.code_invalid", "Unknown cosmetic: " + cosmetic);
+			return;
+		}
+		java.nio.file.Path keyFile = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir()
+				.resolve("frozen-recruiting").resolve("private.key");
+		if (!java.nio.file.Files.exists(keyFile)) {
+			ChatFeedback.error(client, "frozen_recruiting.cosmetic.code_invalid", "Private key not found. Run keygen first.");
+			return;
+		}
+		try {
+			String privB64 = java.nio.file.Files.readString(keyFile).trim();
+			byte[] privBytes = java.util.Base64.getDecoder().decode(privB64);
+			java.security.spec.PKCS8EncodedKeySpec spec = new java.security.spec.PKCS8EncodedKeySpec(privBytes);
+			java.security.PrivateKey privateKey = java.security.KeyFactory.getInstance("Ed25519").generatePrivate(spec);
+			long issuedAt = System.currentTimeMillis();
+			String payload = player + "|" + cosmetic + "|" + def.rarity().name() + "|" + issuedAt;
+			byte[] payloadBytes = payload.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+			java.security.Signature signer = java.security.Signature.getInstance("Ed25519");
+			signer.initSign(privateKey);
+			signer.update(payloadBytes);
+			byte[] signature = signer.sign();
+			String code = "FR1."
+					+ java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payloadBytes) + "."
+					+ java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+			client.keyboard.setClipboard(code);
+			ChatFeedback.success(client, "frozen_recruiting.cosmetic.redeemed", cosmetic, def.rarity().displayName);
+			ChatFeedback.info(client, "frozen_recruiting.msg.set");
+		} catch (Exception e) {
+			ChatFeedback.error(client, "frozen_recruiting.cosmetic.code_invalid", e.getMessage());
+		}
+	}
+	public static void keygenFromGui() {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client == null || client.player == null
+				|| !"chaosfloh2011".equalsIgnoreCase(client.player.getName().getString())) {
+			ChatFeedback.error(client, "frozen_recruiting.cosmetic.code_invalid", "Not authorized.");
+			return;
+		}
+		try {
+			java.security.KeyPairGenerator kp = java.security.KeyPairGenerator.getInstance("Ed25519");
+			java.security.KeyPair pair = kp.generateKeyPair();
+			String privB64 = java.util.Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded());
+			String pubB64 = java.util.Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
+			java.nio.file.Path dir = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("frozen-recruiting");
+			java.nio.file.Files.createDirectories(dir);
+			java.nio.file.Path privFile = dir.resolve("private.key");
+			java.nio.file.Path pubFile = dir.resolve("cosmetic-public-key.txt");
+			java.nio.file.Files.writeString(privFile, privB64);
+			java.nio.file.Files.writeString(pubFile, pubB64);
+			try {
+				java.nio.file.Files.setPosixFilePermissions(privFile,
+						java.util.Set.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+								java.nio.file.attribute.PosixFilePermission.OWNER_WRITE));
+			} catch (UnsupportedOperationException ignored) {
+			}
+			ChatFeedback.success(client, "frozen_recruiting.cosmetic.redeemed", "keypair", "generated");
+			ChatFeedback.info(client, "frozen_recruiting.msg.set");
+		} catch (Exception e) {
+			ChatFeedback.error(client, "frozen_recruiting.cosmetic.code_invalid", e.getMessage());
+		}
 	}
 	private static int keyInfo(CommandContext<FabricClientCommandSource> ctx) {
 		FabricClientCommandSource source = ctx.getSource();

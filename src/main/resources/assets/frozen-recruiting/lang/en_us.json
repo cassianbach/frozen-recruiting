@@ -18,6 +18,17 @@
 	"frozen_recruiting.gui.sent_empty": "You have not sent anyone a message yet.",
 	"frozen_recruiting.gui.sent_no_reply": "No reply yet",
 
+	"frozen_recruiting.gui.tab_cosmetics": "Cosmetics",
+	"frozen_recruiting.gui.your_cosmetics": "Your Cosmetics",
+	"frozen_recruiting.gui.no_cosmetics": "No cosmetics owned. Redeem a code to get one.",
+	"frozen_recruiting.gui.redeem": "Redeem",
+	"frozen_recruiting.gui.redeem_placeholder": "Paste a code here...",
+	"frozen_recruiting.gui.scan": "Scan codes.txt",
+	"frozen_recruiting.gui.keygen": "Keygen",
+	"frozen_recruiting.gui.mint": "Mint",
+	"frozen_recruiting.gui.mint_player": "Player name",
+	"frozen_recruiting.gui.mint_cosmetic": "Cosmetic ID",
+
 	"frozen_recruiting.msg.set": "Recruit message saved. Right-click a player to send it.",
 	"frozen_recruiting.msg.cleared": "Recruit message cleared.",
 	"frozen_recruiting.msg.sent": "Sent to %s",

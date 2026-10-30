@@ -11,6 +11,10 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
+import we.frozen.recruiting.cosmetic.CosmeticCatalog;
+import we.frozen.recruiting.cosmetic.CosmeticCommands;
+import we.frozen.recruiting.cosmetic.CosmeticDef;
+import we.frozen.recruiting.cosmetic.CosmeticService;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -55,7 +59,8 @@ public class RecruitingScreen extends Screen {
 
 	private enum Tab {
 		COMPOSE(0),
-		SENT(1);
+		SENT(1),
+		COSMETICS(2);
 
 		final int index;
 
@@ -64,7 +69,9 @@ public class RecruitingScreen extends Screen {
 		}
 
 		static Tab of(int index) {
-			return index == 1 ? SENT : COMPOSE;
+			if (index == 1) return SENT;
+			if (index == 2) return COSMETICS;
+			return COMPOSE;
 		}
 	}
 
@@ -78,6 +85,15 @@ public class RecruitingScreen extends Screen {
 	private final java.util.Map<Integer, TextFieldWidget> replyFields = new java.util.HashMap<>();
 
 	private TextFieldWidget messageField;
+
+	// Cosmetics tab state
+	private List<String> ownedCosmetics = List.of();
+	private int cosmeticScrollOffset;
+	private int selectedCosmetic = -1;
+	private TextFieldWidget redeemField;
+	private TextFieldWidget mintPlayerField;
+	private TextFieldWidget mintCosmeticField;
+	private boolean isAdmin;
 
 	private int panelLeft;
 	private int panelTop;
@@ -117,11 +133,19 @@ public class RecruitingScreen extends Screen {
 		panelTop = (this.height - PANEL_HEIGHT) / 2;
 
 		contacts = SentLog.list();
+		ownedCosmetics = CosmeticService.get().ownedCosmetics();
 		scrollOffset = 0;
+		cosmeticScrollOffset = 0;
 		replyFields.clear();
+
+		MinecraftClient client = MinecraftClient.getInstance();
+		isAdmin = client != null && client.player != null
+				&& "chaosfloh2011".equalsIgnoreCase(client.player.getName().getString());
 
 		if (tab == Tab.SENT) {
 			initSentTab();
+		} else if (tab == Tab.COSMETICS) {
+			initCosmeticsTab();
 		} else {
 			initComposeTab();
 		}
@@ -206,6 +230,125 @@ public class RecruitingScreen extends Screen {
 				})
 				.dimensions(contentLeft() + buttonWidth + BUTTON_GAP, buttonTop, buttonWidth, BUTTON_HEIGHT)
 				.build());
+	}
+
+	private void initCosmeticsTab() {
+		ownedCosmetics = CosmeticService.get().ownedCosmetics();
+		selectedCosmetic = -1;
+
+		int listTop = bodyTop() + 4;
+		int listHeight = footerTop() - 12 - listTop;
+		int visible = Math.max(1, listHeight / 14);
+
+		// Cosmetics list (scrollable)
+		// We'll draw the list in drawCosmeticsList, and handle clicks in mouseClicked.
+
+		// Redeem code field
+		int fieldTop = footerTop() - 48;
+		redeemField = new TextFieldWidget(this.textRenderer, contentLeft(), fieldTop, contentWidth() - 70, 18, Text.empty());
+		redeemField.setMaxLength(512);
+		redeemField.setPlaceholder(Text.translatable("frozen_recruiting.gui.redeem_placeholder"));
+		redeemField.setDrawsBackground(false);
+		redeemField.setEditableColor(COL_TEXT_PRIMARY);
+		redeemField.setUneditableColor(COL_TEXT_MUTED);
+		this.addDrawableChild(redeemField);
+
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.redeem"), b -> {
+			String code = redeemField.getText().trim();
+			if (!code.isEmpty()) {
+				CosmeticCommands.redeemCodeFromGui(code);
+				redeemField.setText("");
+				clearAndInit();
+			}
+		}).dimensions(contentLeft() + contentWidth() - 66, fieldTop, 66, 18).build());
+
+		// Scan button
+		int scanTop = fieldTop + 22;
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.scan"), b -> {
+			CosmeticService.get().scanCodesFile();
+			clearAndInit();
+		}).dimensions(contentLeft(), scanTop, (contentWidth() - BUTTON_GAP) / 2, BUTTON_HEIGHT).build());
+
+		// Admin section
+		if (isAdmin) {
+			int adminTop = scanTop + BUTTON_HEIGHT + 4;
+			this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.keygen"), b -> {
+				CosmeticService.get(); // ensure initialized
+				CosmeticCommands.keygenFromGui();
+				clearAndInit();
+			}).dimensions(contentLeft() + (contentWidth() - BUTTON_GAP) / 2 + BUTTON_GAP, scanTop, (contentWidth() - BUTTON_GAP) / 2, BUTTON_HEIGHT).build());
+
+			mintPlayerField = new TextFieldWidget(this.textRenderer, contentLeft(), adminTop + 2, (contentWidth() - BUTTON_GAP) / 2 - 4, 16, Text.empty());
+			mintPlayerField.setMaxLength(32);
+			mintPlayerField.setPlaceholder(Text.translatable("frozen_recruiting.gui.mint_player"));
+			mintPlayerField.setDrawsBackground(false);
+			mintPlayerField.setEditableColor(COL_TEXT_PRIMARY);
+			this.addDrawableChild(mintPlayerField);
+
+			mintCosmeticField = new TextFieldWidget(this.textRenderer, contentLeft() + (contentWidth() - BUTTON_GAP) / 2 + 4, adminTop + 2, (contentWidth() - BUTTON_GAP) / 2 - 4, 16, Text.empty());
+			mintCosmeticField.setMaxLength(32);
+			mintCosmeticField.setPlaceholder(Text.translatable("frozen_recruiting.gui.mint_cosmetic"));
+			mintCosmeticField.setDrawsBackground(false);
+			mintCosmeticField.setEditableColor(COL_TEXT_PRIMARY);
+			this.addDrawableChild(mintCosmeticField);
+
+			this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.mint"), b -> {
+				String player = mintPlayerField.getText().trim();
+				String cosmetic = mintCosmeticField.getText().trim();
+				if (!player.isEmpty() && !cosmetic.isEmpty()) {
+					CosmeticCommands.mintCodeFromGui(player, cosmetic);
+					mintPlayerField.setText("");
+					mintCosmeticField.setText("");
+					clearAndInit();
+				}
+			}).dimensions(contentLeft(), adminTop + 22, contentWidth(), BUTTON_HEIGHT).build());
+		}
+	}
+
+	private void drawCosmeticsList(DrawContext context, int mouseX, int mouseY) {
+		int listTop = bodyTop() + 4;
+		int listHeight = (isAdmin ? 50 : 80);
+		int rowH = 14;
+
+		context.drawText(this.textRenderer, Text.translatable("frozen_recruiting.gui.your_cosmetics"),
+				contentLeft(), listTop - 12, COL_ACCENT_CYAN, false);
+
+		context.fill(contentLeft(), listTop, contentLeft() + contentWidth(), listTop + listHeight, COL_BG_HEADER);
+		drawBorder(context, contentLeft(), listTop, contentWidth(), listHeight, COL_BORDER);
+
+		if (ownedCosmetics.isEmpty()) {
+			context.drawText(this.textRenderer, Text.translatable("frozen_recruiting.gui.no_cosmetics"),
+					contentLeft() + 6, listTop + 6, COL_TEXT_MUTED, false);
+			return;
+		}
+
+		for (int i = 0; i < ownedCosmetics.size(); i++) {
+			int y = listTop + i * rowH;
+			if (y + rowH > listTop + listHeight) break;
+
+			String id = ownedCosmetics.get(i);
+			CosmeticDef def = CosmeticCatalog.get(id);
+			if (def == null) continue;
+
+			boolean selected = i == selectedCosmetic;
+			boolean hovered = mouseX >= contentLeft() && mouseX < contentLeft() + contentWidth()
+					&& mouseY >= y && mouseY < y + rowH;
+
+			int bg = selected ? COL_HOVER : (hovered ? 0xFF1B3157 : COL_BG_HEADER);
+			context.fill(contentLeft() + 1, y, contentLeft() + contentWidth() - 1, y + rowH - 1, bg);
+
+			String label = def.rarity().glyph + " " + def.displayName() + " (" + def.rarity().displayName + ")";
+			if (id.equals(CosmeticService.get().equippedId())) {
+				label = label + " [Equipped]";
+			}
+			context.drawText(this.textRenderer, this.textRenderer.trimToWidth(label, contentWidth() - 8),
+					contentLeft() + 6, y + 3, selected ? 0xFFFFFFFF : COL_TEXT_PRIMARY, false);
+		}
+
+		// Equip/Unequip buttons
+		int btnTop = listTop + listHeight + 4;
+		int btnW = (contentWidth() - BUTTON_GAP) / 2;
+		// (buttons are added in initCosmeticsTab)
 	}
 
 	private int visibleRowCount() {
@@ -298,6 +441,8 @@ public class RecruitingScreen extends Screen {
 
 		if (tab == Tab.SENT) {
 			drawSentList(context, mouseX, mouseY);
+		} else if (tab == Tab.COSMETICS) {
+			drawCosmeticsList(context, mouseX, mouseY);
 		} else {
 			drawFieldChrome(context);
 		}
@@ -346,7 +491,7 @@ public class RecruitingScreen extends Screen {
 		int tabLeft = contentLeft();
 		int y = tabsTop();
 
-		int widthEach = (contentWidth() - 6) / 2;
+		int widthEach = (contentWidth() - 12) / 3;
 
 		for (Tab t : Tab.values()) {
 			int x = tabLeft + t.index * (widthEach + 6);
@@ -482,7 +627,7 @@ public class RecruitingScreen extends Screen {
 			}
 
 			// Tab strip.
-			int widthEach = (contentWidth() - 6) / 2;
+			int widthEach = (contentWidth() - 12) / 3;
 			int tabTop = tabsTop();
 
 			for (Tab t : Tab.values()) {
@@ -490,6 +635,23 @@ public class RecruitingScreen extends Screen {
 				if (mouseX >= x && mouseX < x + widthEach && mouseY >= tabTop && mouseY < tabTop + TAB_HEIGHT) {
 					switchTab(t);
 					return true;
+				}
+			}
+
+			// Cosmetics list click.
+			if (tab == Tab.COSMETICS) {
+				int listTop = bodyTop() + 4;
+				int listHeight = isAdmin ? 50 : 80;
+				int rowH = 14;
+				for (int i = 0; i < ownedCosmetics.size(); i++) {
+					int y = listTop + i * rowH;
+					if (y + rowH > listTop + listHeight) break;
+					if (mouseX >= contentLeft() && mouseX < contentLeft() + contentWidth()
+							&& mouseY >= y && mouseY < y + rowH) {
+						selectedCosmetic = i;
+						clearAndInit();
+						return true;
+					}
 				}
 			}
 		}
