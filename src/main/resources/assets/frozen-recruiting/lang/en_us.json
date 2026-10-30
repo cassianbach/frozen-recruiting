@@ -28,6 +28,8 @@
 	"frozen_recruiting.gui.mint": "Mint",
 	"frozen_recruiting.gui.mint_player": "Player name",
 	"frozen_recruiting.gui.mint_cosmetic": "Cosmetic ID",
+	"frozen_recruiting.gui.equip": "Equip",
+	"frozen_recruiting.gui.unequip": "Unequip",
 
 	"frozen_recruiting.msg.set": "Recruit message saved. Right-click a player to send it.",
 	"frozen_recruiting.msg.cleared": "Recruit message cleared.",

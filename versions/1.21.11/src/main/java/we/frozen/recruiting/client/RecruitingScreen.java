@@ -262,8 +262,24 @@ public class RecruitingScreen extends Screen {
 			}
 		}).dimensions(contentLeft() + contentWidth() - 66, fieldTop, 66, 18).build());
 
+		// Equip / Unequip buttons
+		int btnTop = fieldTop + 22;
+		int btnW = (contentWidth() - BUTTON_GAP) / 2;
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.equip"), b -> {
+			if (selectedCosmetic >= 0 && selectedCosmetic < ownedCosmetics.size()) {
+				String id = ownedCosmetics.get(selectedCosmetic);
+				CosmeticService.get().equip(id);
+				clearAndInit();
+			}
+		}).dimensions(contentLeft(), btnTop, btnW, BUTTON_HEIGHT).build());
+
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.unequip"), b -> {
+			CosmeticService.get().unequip();
+			clearAndInit();
+		}).dimensions(contentLeft() + btnW + BUTTON_GAP, btnTop, btnW, BUTTON_HEIGHT).build());
+
 		// Scan button
-		int scanTop = fieldTop + 22;
+		int scanTop = btnTop + BUTTON_HEIGHT + 4;
 		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.scan"), b -> {
 			CosmeticService.get().scanCodesFile();
 			clearAndInit();

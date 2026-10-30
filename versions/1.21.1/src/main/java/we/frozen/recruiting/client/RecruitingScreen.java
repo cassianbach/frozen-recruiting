@@ -13,10 +13,6 @@ import we.frozen.recruiting.cosmetic.CosmeticCatalog;
 import we.frozen.recruiting.cosmetic.CosmeticCommands;
 import we.frozen.recruiting.cosmetic.CosmeticDef;
 import we.frozen.recruiting.cosmetic.CosmeticService;
-import we.frozen.recruiting.cosmetic.CosmeticCatalog;
-import we.frozen.recruiting.cosmetic.CosmeticCommands;
-import we.frozen.recruiting.cosmetic.CosmeticDef;
-import we.frozen.recruiting.cosmetic.CosmeticService;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -264,8 +260,24 @@ public class RecruitingScreen extends Screen {
 			}
 		}).dimensions(contentLeft() + contentWidth() - 66, fieldTop, 66, 18).build());
 
+		// Equip / Unequip buttons
+		int btnTop = fieldTop + 22;
+		int btnW = (contentWidth() - BUTTON_GAP) / 2;
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.equip"), b -> {
+			if (selectedCosmetic >= 0 && selectedCosmetic < ownedCosmetics.size()) {
+				String id = ownedCosmetics.get(selectedCosmetic);
+				CosmeticService.get().equip(id);
+				clearAndInit();
+			}
+		}).dimensions(contentLeft(), btnTop, btnW, BUTTON_HEIGHT).build());
+
+		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.unequip"), b -> {
+			CosmeticService.get().unequip();
+			clearAndInit();
+		}).dimensions(contentLeft() + btnW + BUTTON_GAP, btnTop, btnW, BUTTON_HEIGHT).build());
+
 		// Scan button
-		int scanTop = fieldTop + 22;
+		int scanTop = btnTop + BUTTON_HEIGHT + 4;
 		this.addDrawableChild(ButtonWidget.builder(Text.translatable("frozen_recruiting.gui.scan"), b -> {
 			CosmeticService.get().scanCodesFile();
 			clearAndInit();
@@ -622,8 +634,8 @@ public class RecruitingScreen extends Screen {
 			int buttonTop = panelTop + (HEADER_HEIGHT - buttonHeight) / 2;
 			int buttonLeft = panelLeft + PANEL_WIDTH - PADDING - labelWidth - 8;
 
-			if (mx >= buttonLeft && mx < buttonLeft + labelWidth + 8
-					&& my >= buttonTop && my < buttonTop + buttonHeight) {
+			if (mouseX >= buttonLeft && mouseX < buttonLeft + labelWidth + 8
+					&& mouseY >= buttonTop && mouseY < buttonTop + buttonHeight) {
 				openDiscord();
 				return true;
 			}
@@ -634,7 +646,7 @@ public class RecruitingScreen extends Screen {
 
 			for (Tab t : Tab.values()) {
 				int x = contentLeft() + t.index * (widthEach + 6);
-				if (mx >= x && mx < x + widthEach && my >= tabTop && my < tabTop + TAB_HEIGHT) {
+				if (mouseX >= x && mouseX < x + widthEach && mouseY >= tabTop && mouseY < tabTop + TAB_HEIGHT) {
 					switchTab(t);
 					return true;
 				}
@@ -648,8 +660,8 @@ public class RecruitingScreen extends Screen {
 				for (int i = 0; i < ownedCosmetics.size(); i++) {
 					int y = listTop + i * rowH;
 					if (y + rowH > listTop + listHeight) break;
-					if (mx >= contentLeft() && mx < contentLeft() + contentWidth()
-							&& my >= y && my < y + rowH) {
+					if (mouseX >= contentLeft() && mouseX < contentLeft() + contentWidth()
+							&& mouseY >= y && mouseY < y + rowH) {
 						selectedCosmetic = i;
 						clearAndInit();
 						return true;
@@ -709,11 +721,6 @@ public class RecruitingScreen extends Screen {
 		} else {
 			MinecraftClient.getInstance().setScreen(null);
 		}
-	}
-
-	@Override
-	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-		// Intentionally empty: 1.21.1's default applies a full-screen blur post-process.
 	}
 
 	@Override
